@@ -79,7 +79,7 @@
 ### Linux系统（32/64位）用户：
 
 - 填写settings中的配置文件
-- 在go-cqhttp目录中启动go_cqhttp
+- 在go-cqhttp目录中启动"go-cqhttp_linux_386"
 - （或者想办法指定已经配置好的config.yml为配置文件运行）
 - 扫码登录后，自己想办法后台运行:(
 - 运行可执行文件"main"（注意权限755）
