@@ -39,9 +39,11 @@ dialogue_others = ['抱歉，现在的我还不能和你对话，未来的我或
 # 与机器人对话（你是谁）时的回复
 dialogue_who_are_you = ['你好，群管助手G2，随时为您效劳\n',
                         '我是本群的群管助手\nGithub：funnygeeker/qgma', '我，就是我', '你们的群管是也', '我为秩序而生', '我就是一个管群的，哪有什么...']
+next_check_connection_time = None  # 初始化下次检查连接时间
 next_report_time = None  # 初始化下次消息报告时间
 time_difference = None  # 初始化时差校准变量
 next_task_time = None  # 初始化重置任务队列时间
+running_status = ''  # 初始化运行状态
 del_msg_queue = []  # 初始化消息撤回队列
 report_queue = []  # 初始化消息报告队列
 task_queue = []  # 初始化任务队列
@@ -50,6 +52,8 @@ curfew_state = 0  # 初始化当前宵禁状态
 ads_record = 0  # 初始化广告记录变量
 bad_record = 0  # 初始化脏话记录变量
 rev = None  # 初始化原始消息内容
+
+logger.debug('变量初始化完成...')
 
 # 将24xx的时间转化为00xx
 try:
@@ -64,10 +68,45 @@ except:
 
 
 def Task_Processing():  # 任务处理
-    global logger, time_difference, report_queue, task_queue, next_report_time, next_task_time, ads_record, bad_record, curfew_state
+    global logger, running_status, next_check_connection_time, time_difference, report_queue, task_queue, next_report_time, next_task_time, ads_record, bad_record, curfew_state
     try:
         while 1:
             sleep(0.3)  # 避免电脑卡卡卡卡
+            
+            # 检查与go-cqhttp的连接状况
+            if time_difference != None:
+                if next_check_connection_time <= int(time.time()) + int(time_difference):
+                    # print('check1')
+                    online = get_status()
+                    if online == True:
+                        if running_status != True:  # 如果go-cqhttp服务状态为异常或QQ状态为离线
+                            logger.debug('【信息】已连接到go-cqhttp服务...')
+                            print('【信息】已连接到go-cqhttp服务...')
+                        running_status = True
+                    elif online == False and running_status == True:
+                        logger.warning('【警告】群管助手已离线，请检查运行状态！')
+                        running_status = False
+                    elif online == None and running_status != None:
+                        logger.warning('【警告】无法连接至go-cqhttp服务！')
+                        running_status = None
+                    next_check_connection_time = int(
+                        time.time()) + int(time_difference) + 30
+            elif next_check_connection_time <= int(time.time()):
+                # print('check0')
+                online = get_status()
+                if online == True:
+                    if running_status != True:  # 如果go-cqhttp服务状态为异常或QQ状态为离线
+                        logger.debug('【信息】已连接到go-cqhttp服务...')
+                        print('【信息】已连接到go-cqhttp服务...')
+                    running_status = True
+                elif online == False and running_status == True:
+                    logger.warning('【警告】群管助手已离线，请检查运行状态！')
+                    running_status = False
+                elif online == None and running_status != None:
+                    logger.warning('【警告】无法连接至go-cqhttp服务！')
+                    running_status = None
+                next_check_connection_time = int(time.time()) + 30
+
             # 执行宵禁（定时全员禁言）
             # 如果有有效的宵禁时间，且有有效的群管范围,且时差已校准
             if len(curfew_time) == 2 and group_manage != [] and time_difference != None:
@@ -134,8 +173,10 @@ def Task_Processing():  # 任务处理
 
 
 def Message_Processing():  # 消息处理
-    global logger, dialogue_others, dialogue_who_are_you, time_difference, report_queue, task_queue, next_report_time, next_task_time, ads_record, bad_record, curfew_state
+    global logger, running_status, next_check_connection_time, dialogue_others, dialogue_who_are_you, time_difference, report_queue, task_queue, next_report_time, next_task_time, ads_record, bad_record, curfew_state
     try:
+        logger.debug('等待连接go-cqhttp...')
+        next_check_connection_time = int(time.time()) + 6
         while 1:
             try:
                 rev = Receive.Rev_Msg()
@@ -143,6 +184,12 @@ def Message_Processing():  # 消息处理
                     continue
             except:
                 continue
+            # 更改与go-cqhttp的连接状态
+            if rev.get('status', True) == True:
+                running_status = True
+            elif rev.get('status', True) == False:
+                running_status = False
+
             logger.debug(rev)
 
             # 校准服务器与本地时差
@@ -156,6 +203,9 @@ def Message_Processing():  # 消息处理
                     next_report_time = rev['time'] + 60
                 if next_task_time == None:  # 如果下次任务重置时间为空
                     next_task_time = rev['time'] + int(task_cycle) * 60
+
+            # 设置下次检查连接的时间
+            next_check_connection_time = rev['time'] + 30
 
             # 消息处理
             if rev["post_type"] == "message":  # 如果接收到的内容为消息，开始判断消息类型
@@ -384,15 +434,17 @@ def Message_Processing():  # 消息处理
         quit()
 
 
+logger.debug('函数加载完成...')
+
 # 双线程运行
 t1 = threading.Thread(target=Message_Processing)
 t2 = threading.Thread(target=Task_Processing)
 if __name__ == '__main__':
     t1.start()
     t2.start()
+    logger.debug('程序启动完毕...')
     t1.join()
     t2.join()
-
 
 '''
 # 消息完全匹配

@@ -13,7 +13,7 @@
 import os
 import logging
 import colorlog  # 需安装，用于控制台彩色日志显示
-import traceback  # 需安装，用于捕获错误
+import traceback
 from logging.handlers import RotatingFileHandler
 '''
 # 使用Pyinstaller打包不可用，弃用

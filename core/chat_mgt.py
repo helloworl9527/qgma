@@ -96,6 +96,16 @@ def set_group_add_request(flag: str, sub_type: str, approve: bool = True, reason
         logger.warning('【警告】加群审批处理结果发送失败！')
 
 
+def get_status():
+    '获取go-cqhttp状态'
+    try:
+        #print('getting-------------')
+        return requests.get(url='http://'+server_ip+':'+str(server_send_port)+'/get_status').json()['data']['online']
+    except:
+        #logger.warning('【警告】无法连接至go-cqhttp！')
+        return None
+
+
 '''示例
 send_msg('private', user_id,'你好') # 私聊消息
 send_msg('group', group_id, '大家好') # 群聊消息

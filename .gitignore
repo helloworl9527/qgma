@@ -1,5 +1,7 @@
 /__pycache__
 logs/
+go-cqhttp/
+QGMA_LOGO*.*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
