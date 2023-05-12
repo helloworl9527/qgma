@@ -1,3 +1,8 @@
+## 项目更名说明
+此**项目已更名为溪梦框架（Keiyume）**，此仓库将**不再更新**，项目**迁移**至https://github.com/funnygeeker/keiyume
+感谢你的支持！
+
+
 ## 欢迎使用"极客街-QQ群聊管理助手（QQ Group Management Assistant）"
 
 - 项目交流QQ群：332568832
